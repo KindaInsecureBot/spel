@@ -100,9 +100,12 @@ pub async fn execute_instruction(
     for acc in &ix.accounts {
         if acc.pda.is_some() {
             println!("  📦 {} → auto-computed (PDA)", acc.name);
-        } else {
-            let account_bytes = parsed_accounts.iter().find(|(n, _)| *n == acc.name).unwrap();
+        } else if let Some(account_bytes) = parsed_accounts.iter().find(|(n, _)| *n == acc.name) {
             println!("  📦 {} → 0x{}", acc.name, hex_encode(&account_bytes.1));
+        } else if acc.rest {
+            println!("  📦 {} → (none provided, rest account)", acc.name);
+        } else {
+            println!("  📦 {} → ⚠️ MISSING", acc.name);
         }
     }
     println!();
@@ -200,6 +203,10 @@ pub async fn execute_instruction(
 
     let mut account_ids: Vec<AccountId> = Vec::new();
     for acc in &ix.accounts {
+        if acc.rest && !account_map.contains_key(&acc.name) {
+            // rest account with 0 entries — skip
+            continue;
+        }
         let id = account_map.get(&acc.name).unwrap_or_else(|| {
             eprintln!("❌ Account '{}' not resolved", acc.name);
             process::exit(1);
