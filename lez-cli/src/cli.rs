@@ -27,7 +27,7 @@ pub fn print_help(idl: &LezIdl, binary_name: &str) {
             .collect();
         let acct_desc: Vec<String> = ix.accounts.iter()
             .filter(|a| a.pda.is_none())
-            .map(|a| format!("--{}-account <BASE58|HEX>", snake_to_kebab(&a.name)))
+            .map(|a| format!("--{} <BASE58|HEX>", snake_to_kebab(&a.name)))
             .collect();
         let all_args: Vec<String> = args_desc.into_iter().chain(acct_desc).collect();
         println!("  {:<20} {}", cmd, all_args.join(" "));
@@ -64,7 +64,7 @@ pub fn print_instruction_help(ix: &IdlInstruction) {
     }
     for acc in &ix.accounts {
         if acc.pda.is_none() {
-            println!("  --{}-account    Account ID for '{}' (64 hex chars)", snake_to_kebab(&acc.name), acc.name);
+            println!("  --{:<25} Account ID for '{}'", snake_to_kebab(&acc.name), acc.name);
         }
     }
 }
