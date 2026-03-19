@@ -169,6 +169,12 @@ Each account field includes:
 
 These fields are optional and backward-compatible -- existing IDL consumers that do not know about them will simply ignore them.
 
+## Documentation
+
+- [Local Development Setup](docs/local-setup.md) — Building without Docker, setting up a local sequencer
+- [Multi-seed PDA Derivation](docs/multi-seed-pda.md) — Design document for advanced PDA seeds
+- [Privacy-Preserving Transactions](docs/privacy.md) — Private accounts, commitments, nullifiers, and wallet operations
+
 ## CLI Usage
 
 ```bash
