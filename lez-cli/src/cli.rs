@@ -18,6 +18,7 @@ pub fn print_help(idl: &LezIdl, binary_name: &str) {
     println!();
     println!("COMMANDS:");
     println!("  inspect <FILE> [FILE...]   Print ProgramId for ELF binary(ies)");
+    println!("  generate-idl [PATH]        Generate IDL JSON (auto-detects methods/guest/src/bin/ if no path given)");
     println!("  idl                        Print IDL information");
 
     for ix in &idl.instructions {
