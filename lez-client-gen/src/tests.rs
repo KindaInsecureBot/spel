@@ -514,10 +514,10 @@ fn test_standalone_pda_helpers() {
         "should generate standalone PDA helper with program_id parameter"
     );
 
-    // Should include program_id bytes in PDA computation
+    // Should use lez_framework_core::pda::compute_pda
     assert!(
-        code.contains("pid_bytes"),
-        "PDA helper should convert program_id to bytes"
+        code.contains("lez_framework_core::pda::compute_pda(program_id"),
+        "PDA helper should use framework core compute_pda"
     );
 
     // Should use create_key seed (from first occurrence); [u8; 32] maps to AccountId
@@ -609,9 +609,9 @@ fn test_pda_helper_with_numeric_seed() {
         "numeric seed arg should be passed by value"
     );
 
-    // Should use to_be_bytes for u64
+    // Should use to_be_bytes for u64 and pad to [u8; 32]
     assert!(
-        code.contains("counter_id_bytes = counter_id.to_be_bytes()"),
+        code.contains("counter_id_be = counter_id.to_be_bytes()"),
         "should convert u64 to big-endian bytes"
     );
 
@@ -661,10 +661,10 @@ fn test_pda_helper_with_account_seed() {
         "account seed param should be &AccountId"
     );
 
-    // Should use as_ref() for AccountId
+    // Should use value() for AccountId to get &[u8; 32]
     assert!(
-        code.contains("owner.as_ref()"),
-        "should use as_ref() for account seed"
+        code.contains("owner.value()"),
+        "should use value() for account seed"
     );
 }
 

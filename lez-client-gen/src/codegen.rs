@@ -26,23 +26,6 @@ pub fn generate_client(idl: &LezIdl) -> Result<String, String> {
     writeln!(out, "use wallet::WalletCore;").unwrap();
     writeln!(out).unwrap();
 
-    // PDA helper — SHA-256(seed1 || seed2 || ...) matching on-chain derivation
-    writeln!(out, "/// Compute a PDA by SHA-256 hashing concatenated seeds.").unwrap();
-    writeln!(out, "/// Matches the on-chain nssa PDA derivation (not XOR).").unwrap();
-    writeln!(out, "fn compute_pda(seeds: &[&[u8]]) -> AccountId {{").unwrap();
-    writeln!(out, "    use sha2::{{Sha256, Digest}};").unwrap();
-    writeln!(out, "    let mut hasher = Sha256::new();").unwrap();
-    writeln!(out, "    for seed in seeds {{").unwrap();
-    writeln!(out, "        let mut padded = [0u8; 32];").unwrap();
-    writeln!(out, "        let len = seed.len().min(32);").unwrap();
-    writeln!(out, "        padded[..len].copy_from_slice(&seed[..len]);").unwrap();
-    writeln!(out, "        hasher.update(&padded);").unwrap();
-    writeln!(out, "    }}").unwrap();
-    writeln!(out, "    let hash: [u8; 32] = hasher.finalize().into();").unwrap();
-    writeln!(out, "    AccountId::from(hash)").unwrap();
-    writeln!(out, "}}").unwrap();
-    writeln!(out).unwrap();
-
     // Parse helpers
     writeln!(out, "/// Parse a hex string into ProgramId [u32; 8] (little-endian byte order).").unwrap();
     writeln!(out, "pub fn parse_program_id_hex(s: &str) -> Result<ProgramId, String> {{").unwrap();
@@ -68,12 +51,10 @@ pub fn generate_client(idl: &LezIdl) -> Result<String, String> {
             write!(out, ", {}: {}", pname, pty).unwrap();
         }
         writeln!(out, ") -> AccountId {{").unwrap();
-        writeln!(out, "    let pid_bytes: Vec<u8> = program_id.iter().flat_map(|w| w.to_le_bytes()).collect();").unwrap();
         for binding in &helper.let_bindings {
             writeln!(out, "    {}", binding).unwrap();
         }
-        writeln!(out, "    compute_pda(&[").unwrap();
-        writeln!(out, "        &pid_bytes,").unwrap();
+        writeln!(out, "    lez_framework_core::pda::compute_pda(program_id, &[").unwrap();
         for expr in &helper.seed_exprs {
             writeln!(out, "        {},", expr).unwrap();
         }
@@ -240,12 +221,17 @@ fn collect_pda_helpers(idl: &LezIdl) -> Vec<PdaHelper> {
                 for seed in &pda.seeds {
                     match seed {
                         IdlSeed::Const { value } => {
-                            seed_exprs.push(format!("b\"{}\"", value));
+                            let var = format!("seed_const_{}", let_bindings.len());
+                            let_bindings.push(format!(
+                                "let {} = lez_framework_core::pda::seed_from_str(\"{}\");",
+                                var, value
+                            ));
+                            seed_exprs.push(format!("&{}", var));
                         }
                         IdlSeed::Account { path } => {
                             let name = snake_case(path);
                             params.push((name.clone(), "&AccountId".to_string()));
-                            seed_exprs.push(format!("{}.as_ref()", name));
+                            seed_exprs.push(format!("{}.value()", name));
                         }
                         IdlSeed::Arg { path } => {
                             let name = snake_case(path);
@@ -280,30 +266,35 @@ fn collect_pda_helpers(idl: &LezIdl) -> Vec<PdaHelper> {
 /// Returns (param_type, optional_let_binding, seed_expression).
 fn seed_arg_codegen(name: &str, rust_type: &str) -> (String, Option<String>, String) {
     match rust_type {
-        "AccountId" | "[u8; 32]" | "[u8;32]" => (
+        "AccountId" => (
+            "&AccountId".to_string(),
+            None,
+            format!("{}.value()", name),
+        ),
+        "[u8; 32]" | "[u8;32]" => (
             format!("&{}", rust_type),
             None,
-            format!("{}.as_ref()", name),
+            format!("{}", name),
         ),
         "ProgramId" | "[u32; 8]" | "[u32;8]" => (
             "&ProgramId".to_string(),
-            Some(format!("let {name}_bytes: Vec<u8> = {name}.iter().flat_map(|w| w.to_le_bytes()).collect();")),
-            format!("&{name}_bytes"),
+            Some(format!("let {name}_seed: [u8; 32] = {name}.iter().flat_map(|w| w.to_le_bytes()).collect::<Vec<_>>().try_into().unwrap();")),
+            format!("&{name}_seed"),
         ),
         "u64" | "u32" | "u16" | "u8" | "u128" | "i64" | "i32" | "i16" | "i8" | "i128" => (
             rust_type.to_string(),
-            Some(format!("let {name}_bytes = {name}.to_be_bytes();")),
-            format!("&{name}_bytes"),
+            Some(format!("let {name}_be = {name}.to_be_bytes();\n    let mut {name}_seed = [0u8; 32];\n    {name}_seed[..{name}_be.len()].copy_from_slice(&{name}_be);")),
+            format!("&{name}_seed"),
         ),
         "String" => (
             "&str".to_string(),
-            None,
-            format!("{name}.as_bytes()"),
+            Some(format!("let {name}_seed = lez_framework_core::pda::seed_from_str({name});")),
+            format!("&{name}_seed"),
         ),
         _ => (
             format!("&{}", rust_type),
-            None,
-            format!("{name}.to_string().as_bytes()"),
+            Some(format!("let {name}_seed = lez_framework_core::pda::seed_from_str(&{name}.to_string());")),
+            format!("&{name}_seed"),
         ),
     }
 }
