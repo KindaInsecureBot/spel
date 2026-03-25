@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# lez-framework end-to-end smoke test
+# spel-framework end-to-end smoke test
 # Tests the full pipeline: init → build guest → deploy → submit tx
 #
 # Prerequisites:
-#   - lez-cli in PATH (cargo install --path lez-cli)
+#   - spel in PATH (cargo install --path spel)
 #   - cargo-risczero installed (cargo risczero --version)
 #   - Docker running (for risc0 guest builds)
 #   - sequencer_runner in PATH or ~/bin/
@@ -11,7 +11,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-WORK_DIR="${WORK_DIR:-/tmp/lez-smoke-test}"
+WORK_DIR="${WORK_DIR:-/tmp/spel-smoke-test}"
 SEQUENCER_PORT="${SEQUENCER_PORT:-3040}"
 SEQUENCER_URL="http://127.0.0.1:${SEQUENCER_PORT}"
 PROJECT_NAME="smoke_test_program"
@@ -40,7 +40,7 @@ trap cleanup EXIT
 
 log "Checking prerequisites..."
 
-command -v lez-cli >/dev/null 2>&1 || fail "lez-cli not found in PATH"
+command -v spel >/dev/null 2>&1 || fail "spel not found in PATH"
 command -v cargo >/dev/null 2>&1 || fail "cargo not found"
 command -v cargo-risczero >/dev/null 2>&1 || warn "cargo-risczero not found — guest build may fail"
 docker info >/dev/null 2>&1 || warn "Docker not running — guest build may fail"
@@ -66,7 +66,7 @@ rm -rf "$WORK_DIR"
 mkdir -p "$WORK_DIR" "$LOG_DIR"
 cd "$WORK_DIR"
 
-lez-cli init "$PROJECT_NAME" > "$LOG_DIR/init.log" 2>&1 || fail "lez-cli init failed (see $LOG_DIR/init.log)"
+spel init "$PROJECT_NAME" > "$LOG_DIR/init.log" 2>&1 || fail "spel init failed (see $LOG_DIR/init.log)"
 cd "$PROJECT_NAME"
 
 # Verify scaffold structure
@@ -186,7 +186,7 @@ print(idl['instructions'][0]['name'])
 ")
 
 # Try submitting the first instruction (may fail if it needs specific args — that's OK)
-SEQUENCER_URL="$SEQUENCER_URL" lez-cli --idl "$IDL_FILE_ABS" -p "$GUEST_BIN_ABS" \
+SEQUENCER_URL="$SEQUENCER_URL" spel --idl "$IDL_FILE_ABS" -p "$GUEST_BIN_ABS" \
     "$FIRST_IX" > "$LOG_DIR/submit.log" 2>&1 \
     && log "  ✅ Transaction submitted" \
     || warn "Submit failed (may need args — see $LOG_DIR/submit.log). Deploy was successful."

@@ -1,8 +1,8 @@
-# lez-framework
+# spel-framework
 
-[![CI](https://github.com/jimmy-claw/lez-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/jimmy-claw/lez-framework/actions/workflows/ci.yml)
+[![CI](https://github.com/logos-co/spel/actions/workflows/ci.yml/badge.svg)](https://github.com/logos-co/spel/actions/workflows/ci.yml)
 
-Developer framework for building LEZ programs — inspired by [Anchor](https://www.anchor-lang.com/) for Solana.
+Developer framework for building SPEL programs — inspired by [Anchor](https://www.anchor-lang.com/) for Solana.
 
 Write your program logic with proc macros. Get IDL generation, a full CLI with TX submission, and project scaffolding for free.
 
@@ -11,8 +11,8 @@ Write your program logic with proc macros. Get IDL generation, a full CLI with T
 ### Scaffold a new project
 
 ```bash
-cargo install --path lez-cli
-lez-cli init my-program
+cargo install --path spel-cli  # installs as "spel"
+spel init my-program
 cd my-program
 ```
 
@@ -51,7 +51,7 @@ make cli ARGS="-p <binary> initialize --owner-account <BASE58>"
 
 use nssa_core::account::AccountWithMetadata;
 use nssa_core::program::AccountPostState;
-use lez_framework::prelude::*;
+use spel_framework::prelude::*;
 
 risc0_zkvm::guest::entry!(main);
 
@@ -66,9 +66,9 @@ mod my_program {
         state: AccountWithMetadata,
         #[account(signer)]
         owner: AccountWithMetadata,
-    ) -> LezResult {
+    ) -> SpelResult {
         // Your logic here
-        Ok(LezOutput::states_only(vec![
+        Ok(SpelOutput::states_only(vec![
             AccountPostState::new_claimed(state.account.clone()),
             AccountPostState::new(owner.account.clone()),
         ]))
@@ -82,9 +82,9 @@ mod my_program {
         #[account(signer)]
         sender: AccountWithMetadata,
         amount: u128,
-    ) -> LezResult {
+    ) -> SpelResult {
         // Your logic here
-        Ok(LezOutput::states_only(vec![
+        Ok(SpelOutput::states_only(vec![
             AccountPostState::new(state.account.clone()),
             AccountPostState::new(recipient.account.clone()),
             AccountPostState::new(sender.account.clone()),
@@ -109,8 +109,8 @@ mod my_program {
 
 Accounts marked with `#[account(signer)]` or `#[account(init)]` get **automatic runtime checks** before your handler runs:
 
-- **Signer**: Verifies `is_authorized` is true, returns `LezError::Unauthorized` if not
-- **Init**: Verifies account is in default state, returns `LezError::AccountAlreadyInitialized` if not
+- **Signer**: Verifies `is_authorized` is true, returns `SpelError::Unauthorized` if not
+- **Init**: Verifies account is in default state, returns `SpelError::AccountAlreadyInitialized` if not
 
 No manual checking needed in your instruction handlers.
 
@@ -132,7 +132,7 @@ Every program gets a full CLI for free. The wrapper is just:
 ```rust
 #[tokio::main]
 async fn main() {
-    lez_cli::run().await;
+    spel_cli::run().await;
 }
 ```
 
@@ -150,7 +150,7 @@ This provides:
 The IDL generator is also a one-liner:
 
 ```rust
-lez_framework::generate_idl!("../methods/guest/src/bin/my_program.rs");
+spel_framework::generate_idl!("../methods/guest/src/bin/my_program.rs");
 ```
 
 It reads the `#[lez_program]` annotations at compile time and generates a complete JSON IDL describing instructions, arguments, accounts, and PDA seeds.
@@ -173,34 +173,34 @@ These fields are optional and backward-compatible -- existing IDL consumers that
 
 ```bash
 # Scaffold a new project (no --idl needed)
-lez-cli init my-program
+spel init my-program
 
 # Inspect program binaries (no --idl needed)
-lez-cli inspect program.bin
+spel inspect program.bin
 
 # Show available commands
-lez-cli --idl program-idl.json --help
+spel --idl program-idl.json --help
 
 # Dry run an instruction
-lez-cli --idl program-idl.json --dry-run -p program.bin \
+spel --idl program-idl.json --dry-run -p program.bin \
   create-vault --token-name "MYTKN" --initial-supply 1000000
 
 # Submit a transaction
-lez-cli --idl program-idl.json -p program.bin \
+spel --idl program-idl.json -p program.bin \
   create-vault --token-name "MYTKN" --initial-supply 1000000
 
 # Use --program-id instead of binary (skips loading the file)
-lez-cli --idl program-idl.json --program-id <64-char-hex>   create-vault --token-name "MYTKN" --initial-supply 1000000
+spel --idl program-idl.json --program-id <64-char-hex>   create-vault --token-name "MYTKN" --initial-supply 1000000
 
 # Compute a PDA from the IDL
-lez-cli --idl program-idl.json --program-id <64-char-hex> pda vault --create-key my-multisig
+spel --idl program-idl.json --program-id <64-char-hex> pda vault --create-key my-multisig
 
 # Auto-fill program IDs from binaries
-lez-cli --idl program-idl.json -p treasury.bin --bin-token token.bin \
+spel --idl program-idl.json -p treasury.bin --bin-token token.bin \
   create-vault --token-name "MYTKN" --initial-supply 1000000
 
 # Get help for a specific instruction
-lez-cli --idl program-idl.json create-vault --help
+spel --idl program-idl.json create-vault --help
 ```
 
 ### Type Formats
@@ -221,11 +221,11 @@ lez-cli --idl program-idl.json create-vault --help
 
 | Crate | Description |
 |-------|-------------|
-| `lez-framework` | Umbrella crate — re-exports macros + core with a prelude |
-| `lez-framework-core` | IDL types, error types, `LezOutput` |
-| `lez-framework-macros` | Proc macros: `#[lez_program]`, `#[instruction]`, `generate_idl!` |
-| `lez-cli` | Generic IDL-driven CLI with TX submission + project scaffolding |
-| `lez-client-gen` | Code generator — produces typed Rust FFI clients from IDL JSON |
+| `spel-framework` | Umbrella crate — re-exports macros + core with a prelude |
+| `spel-framework-core` | IDL types, error types, `SpelOutput` |
+| `spel-framework-macros` | Proc macros: `#[lez_program]`, `#[instruction]`, `generate_idl!` |
+| `spel` | Generic IDL-driven CLI with TX submission + project scaffolding |
+| `spel-client-gen` | Code generator — produces typed Rust FFI clients from IDL JSON |
 
 ## License
 

@@ -5,7 +5,7 @@
 
 #![allow(dead_code, unused_imports, unused_variables)]
 
-use lez_framework::prelude::*;
+use spel_framework::prelude::*;
 
 #[lez_program]
 mod treasury {
@@ -20,8 +20,8 @@ mod treasury {
         #[account(signer)]
         authority: AccountWithMetadata,
         threshold: u64,
-    ) -> LezResult {
-        Ok(LezOutput::states_only(vec![]))
+    ) -> SpelResult {
+        Ok(SpelOutput::states_only(vec![]))
     }
 
 
@@ -33,8 +33,8 @@ mod treasury {
         #[account(signer)]
         owner: AccountWithMetadata,
         owner_key: [u8; 32],
-    ) -> LezResult {
-        Ok(LezOutput::states_only(vec![]))
+    ) -> SpelResult {
+        Ok(SpelOutput::states_only(vec![]))
     }
 
     /// Create a user config (PDA from literal + arg multi-seed).
@@ -45,8 +45,8 @@ mod treasury {
         #[account(signer)]
         admin: AccountWithMetadata,
         user_id: [u8; 32],
-    ) -> LezResult {
-        Ok(LezOutput::states_only(vec![]))
+    ) -> SpelResult {
+        Ok(SpelOutput::states_only(vec![]))
     }
     /// Transfer funds.
     #[instruction]
@@ -59,8 +59,8 @@ mod treasury {
         signer: AccountWithMetadata,
         amount: u64,
         memo: String,
-    ) -> LezResult {
-        Ok(LezOutput::states_only(vec![]))
+    ) -> SpelResult {
+        Ok(SpelOutput::states_only(vec![]))
     }
 }
 
@@ -87,7 +87,7 @@ mod tests {
 
     #[test]
     fn idl_json_round_trip() {
-        let idl: lez_framework::idl::LezIdl =
+        let idl: spel_framework::idl::SpelIdl =
             serde_json::from_str(PROGRAM_IDL_JSON).expect("PROGRAM_IDL_JSON should parse");
         assert_eq!(idl.name, "treasury");
         assert_eq!(idl.instructions.len(), 4);
