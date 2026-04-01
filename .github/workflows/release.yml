@@ -32,6 +32,12 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Install logos-blockchain-circuits
+        run: |
+          curl -sSL https://raw.githubusercontent.com/logos-blockchain/logos-blockchain/main/scripts/setup-logos-blockchain-circuits.sh | bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       # ── Create release branch ──────────────────────────────────────────
       - name: Create release branch
         run: |
@@ -186,7 +192,7 @@ jobs:
           body: |
             ## v${{ steps.version.outputs.version }}
 
-            See CHANGELOG.md for full details.
+            ${{ steps.changelog.outputs.body }}
 
             ---
 
