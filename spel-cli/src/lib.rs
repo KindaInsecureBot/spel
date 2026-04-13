@@ -91,10 +91,26 @@ pub async fn run() {
         match cmd {
             "init" => {
                 let name = remaining_args.get(2).unwrap_or_else(|| {
-                    eprintln!("Usage: {} init <project-name>", args[0]);
+                    eprintln!("Usage: {} init <project-name> [--lez-tag <tag>] [--spel-tag <tag>] [--lez-rev <rev>] [--spel-rev <rev>]", args[0]);
                     process::exit(1);
                 });
-                init_project(name);
+                // Parse optional tag/rev arguments
+                let mut lez_tag: Option<&str> = None;
+                let mut spel_tag: Option<&str> = None;
+                let mut lez_rev: Option<&str> = None;
+                let mut spel_rev: Option<&str> = None;
+                let mut j = 3;
+                while j < remaining_args.len() {
+                    match remaining_args[j].as_str() {
+                        "--lez-tag" => { j += 1; if j < remaining_args.len() { lez_tag = Some(&remaining_args[j]); } }
+                        "--spel-tag" => { j += 1; if j < remaining_args.len() { spel_tag = Some(&remaining_args[j]); } }
+                        "--lez-rev" => { j += 1; if j < remaining_args.len() { lez_rev = Some(&remaining_args[j]); } }
+                        "--spel-rev" => { j += 1; if j < remaining_args.len() { spel_rev = Some(&remaining_args[j]); } }
+                        _ => {}
+                    }
+                    j += 1;
+                }
+                init_project(name, lez_tag, spel_tag, lez_rev, spel_rev);
                 return;
             }
             "inspect" if type_name.is_none() && data_hex.is_none() && idl_path.is_empty() => {
@@ -196,7 +212,8 @@ pub async fn run() {
         eprintln!("Usage: {} --idl <IDL_FILE> <COMMAND> [ARGS]", args[0]);
         eprintln!();
         eprintln!("Commands that don't need --idl:");
-        eprintln!("  init <name>              Scaffold a new SPEL project");
+        eprintln!("  init <name> [--lez-tag <tag>] [--spel-tag <tag>] [--lez-rev <rev>] [--spel-rev <rev>]");
+        eprintln!("                           Scaffold a new SPEL project");
         eprintln!("  inspect <FILE> [FILE...]  Print ProgramId for ELF binary(ies)");
         eprintln!("  inspect <ACCOUNT-ID> --idl <IDL> --type <TYPE>  Decode account data");
         eprintln!("  generate-idl [PATH]      Generate IDL JSON from a program source file or project directory");

@@ -69,7 +69,8 @@ cd "$WORK_DIR"
 # ─── Step 1: Scaffold project ──────────────────────────────────────────────
 
 log "Step 1: Creating SPEL project..."
-spel init "$PROJECT_NAME" > "$LOG_DIR/init.log" 2>&1 || fail "spel init failed"
+# Use explicit tags to ensure dependency consistency
+spel init "$PROJECT_NAME" --lez-tag v0.2.0-rc1 --spel-tag v0.2.0-rc.1 > "$LOG_DIR/init.log" 2>&1 || fail "spel init failed"
 cd "$PROJECT_NAME"
 log "  ✅ Project scaffolded"
 
@@ -108,7 +109,7 @@ mod privacy_test {
             data.extend_from_slice(&greeting);
             acc.data = Data::try_from(data)
                 .map_err(|_| SpelError::custom(999, "data too big"))?;
-            AccountPostState::new_claimed(acc, Claim::default())
+            AccountPostState::new_claimed(acc, Claim::Authorized)
         } else {
             // Already owned (e.g. by auth-transfer): return unchanged
             AccountPostState::new(acc)
