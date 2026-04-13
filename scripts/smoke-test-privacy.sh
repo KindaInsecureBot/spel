@@ -68,8 +68,20 @@ cd "$WORK_DIR"
 
 # ─── Step 1: Scaffold project ──────────────────────────────────────────────
 
+# Allow passing LEZ revision via environment variable (set by CI)
+LEZ_REV="${LEZ_REV:-}"
+SPEL_REV="${SPEL_REV:-}"
+
 log "Step 1: Creating SPEL project..."
-spel init "$PROJECT_NAME" > "$LOG_DIR/init.log" 2>&1 || fail "spel init failed"
+if [ -n "$LEZ_REV" ] && [ -n "$SPEL_REV" ]; then
+  # Use explicit revisions to match CI's LEZ version
+  log "  Using LEZ rev: $LEZ_REV, SPEL rev: $SPEL_REV"
+  spel init "$PROJECT_NAME" --lez-rev "$LEZ_REV" --spel-rev "$SPEL_REV" > "$LOG_DIR/init.log" 2>&1 || fail "spel init failed"
+else
+  # Fallback to tags (may cause version mismatch)
+  log "  Warning: LEZ_REV/SPEL_REV not set, using default tags"
+  spel init "$PROJECT_NAME" --lez-tag v0.2.0-rc1 --spel-tag v0.2.0-rc.1 > "$LOG_DIR/init.log" 2>&1 || fail "spel init failed"
+fi
 cd "$PROJECT_NAME"
 log "  ✅ Project scaffolded"
 
@@ -81,7 +93,8 @@ log "Step 2: Setting up test program..."
 cat > "methods/guest/src/bin/${PROJECT_NAME}.rs" << 'RUSTEOF'
 #![no_main]
 use spel_framework::prelude::*;
-use nssa_core::account::Data;
+use nssa_core::account::data::Data;
+use nssa_core::program::Claim;
 
 risc0_zkvm::guest::entry!(main);
 
@@ -107,7 +120,7 @@ mod privacy_test {
             data.extend_from_slice(&greeting);
             acc.data = Data::try_from(data)
                 .map_err(|_| SpelError::custom(999, "data too big"))?;
-            AccountPostState::new_claimed(acc)
+            AccountPostState::new_claimed(acc, Claim::Authorized)
         } else {
             // Already owned (e.g. by auth-transfer): return unchanged
             AccountPostState::new(acc)
