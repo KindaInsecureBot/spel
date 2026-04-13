@@ -297,6 +297,7 @@ borsh = "1.5"
     write_file(root, &format!("methods/guest/src/bin/{}.rs", snake_name), &format!(r#"#![no_main]
 
 use spel_framework::prelude::*;
+use nssa_core::program::Claim;
 
 risc0_zkvm::guest::entry!(main);
 
@@ -315,7 +316,7 @@ mod {snake_name} {{
     ) -> SpelResult {{
         // TODO: implement initialization logic
         Ok(SpelOutput::states_only(vec![
-            AccountPostState::new_claimed(state.account.clone()),
+            AccountPostState::new_claimed(state.account.clone(), Claim::default()),
             AccountPostState::new(owner.account.clone()),
         ]))
     }}
