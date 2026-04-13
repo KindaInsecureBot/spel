@@ -81,7 +81,8 @@ log "Step 2: Setting up test program..."
 cat > "methods/guest/src/bin/${PROJECT_NAME}.rs" << 'RUSTEOF'
 #![no_main]
 use spel_framework::prelude::*;
-use nssa_core::account::Data;
+use nssa_core::account::data::Data;
+use nssa_core::program::Claim;
 
 risc0_zkvm::guest::entry!(main);
 
@@ -107,7 +108,7 @@ mod privacy_test {
             data.extend_from_slice(&greeting);
             acc.data = Data::try_from(data)
                 .map_err(|_| SpelError::custom(999, "data too big"))?;
-            AccountPostState::new_claimed(acc)
+            AccountPostState::new_claimed(acc, Claim::default())
         } else {
             // Already owned (e.g. by auth-transfer): return unchanged
             AccountPostState::new(acc)
