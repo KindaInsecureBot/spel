@@ -115,6 +115,12 @@ jobs:
         env:
           NSSA_WALLET_HOME_DIR: /tmp/wallet
           LSSA_DIR: /tmp/lssa
+          LEZ_REV: ${{ steps.lez-ref.outputs.LEZ_REV }}
+          # Use the current commit for SPEL revision (local build)
+          SPEL_REV: ${{ github.sha }}
+          # Use local path for spel-framework to ensure version consistency
+          SPEL_LOCAL_PATH: ${{ github.workspace }}/spel-framework
+          SPEL_CLI_LOCAL_PATH: ${{ github.workspace }}/spel-cli
         run: |
           export PATH="/tmp/lssa/target/release:$PATH"
           scripts/smoke-test-privacy.sh /tmp/privacy-smoke

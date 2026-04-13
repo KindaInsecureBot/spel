@@ -282,6 +282,13 @@ risc0-zkvm = {{ version = "=3.0.5", features = ["std"] }}
         _ => "tag = \"v0.2.0-rc.1\"".to_string(),
     };
     // methods/guest/Cargo.toml
+    // For local development, use path dependency if SPEL_LOCAL_PATH is set
+    let spel_dep = if let Ok(local_path) = std::env::var("SPEL_LOCAL_PATH") {
+        format!("{{ path = \"{}\" }}", local_path)
+    } else {
+        format!("{{ git = \"https://github.com/logos-co/spel.git\", {} }}", spel_ref)
+    };
+    
     write_file(root, "methods/guest/Cargo.toml", &format!(r#"[package]
 name = "{snake_name}-guest"
 version = "0.1.0"
@@ -294,7 +301,7 @@ name = "{snake_name}"
 path = "src/bin/{snake_name}.rs"
 
 [dependencies]
-spel-framework = {{ git = "https://github.com/logos-co/spel.git", {spel_ref} }}
+spel-framework = {spel_dep}
 nssa_core = {{ git = "https://github.com/logos-blockchain/logos-execution-zone.git", {lez_ref} }}
 risc0-zkvm = {{ version = "=3.0.5", features = ["std"] }}
 {snake_name}_core = {{ path = "../../{snake_name}_core" }}
@@ -349,6 +356,18 @@ mod {snake_name} {{
 "#));
 
     // examples/Cargo.toml
+    // Also use local path if SPEL_LOCAL_PATH is set
+    let spel_dep_examples = if let Ok(local_path) = std::env::var("SPEL_LOCAL_PATH") {
+        format!("{{ path = \"{}\" }}", local_path)
+    } else {
+        format!("{{ git = \"https://github.com/logos-co/spel.git\", {} }}", spel_ref)
+    };
+    let spel_cli_dep = if let Ok(local_cli_path) = std::env::var("SPEL_CLI_LOCAL_PATH") {
+        format!("{{ path = \"{}\" }}", local_cli_path)
+    } else {
+        format!("{{ git = \"https://github.com/logos-co/spel.git\", {} }}", spel_ref)
+    };
+    
     write_file(root, "examples/Cargo.toml", &format!(r#"[package]
 name = "{snake_name}-examples"
 version = "0.1.0"
@@ -363,9 +382,9 @@ name = "{snake_name}_cli"
 path = "src/bin/{snake_name}_cli.rs"
 
 [dependencies]
-spel-framework = {{ git = "https://github.com/logos-co/spel.git", {spel_ref} }}
+spel-framework = {spel_dep_examples}
 nssa_core = {{ git = "https://github.com/logos-blockchain/logos-execution-zone.git", {lez_ref} }}
-spel = {{ git = "https://github.com/logos-co/spel.git", {spel_ref} }}
+spel = {spel_cli_dep}
 {snake_name}_core = {{ path = "../{snake_name}_core" }}
 serde_json = "1.0"
 tokio = {{ version = "1.28.2", features = ["net", "rt-multi-thread", "sync", "macros"] }}
