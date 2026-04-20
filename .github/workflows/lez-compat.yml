@@ -50,6 +50,18 @@ jobs:
             echo "  Updated: $f"
           done
 
+      - name: Download logos-blockchain-circuits
+        run: |
+          # Download the latest circuits release from logos-blockchain repo
+          CIRCUITS_URL="https://github.com/logos-blockchain/logos-blockchain/releases/download/circuits-v0.2.1/logos-blockchain-circuits-x86_64-linux.tar.gz"
+          echo "Downloading logos-blockchain-circuits..."
+          mkdir -p ~/.logos-blockchain-circuits
+          curl -L "$CIRCUITS_URL" | tar -xz -C ~/.logos-blockchain-circuits
+          echo "LOGOS_BLOCKCHAIN_CIRCUITS=$HOME/.logos-blockchain-circuits" >> "$GITHUB_ENV"
+          echo "✅ Circuits downloaded to ~/.logos-blockchain-circuits"
+        continue-on-error: true
+        # If download fails, the build may still work if circuits aren't required for the check step
+
       - name: cargo check (spel)
         run: cargo check -p spel
 
